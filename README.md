@@ -1,2 +1,6 @@
-# BS_Discussion_Helper
-This is a personal project designed to improve the quality of life of the instructor in charge of reading 40+ student's original discussion posts each week, as well as their required responses. This project will feature a scrape/crawl method to fill a CSV of student's weekly responses, and then auto-grader modules to evaluate the students weekly.
+# Brightspace Discussion Board Helper Tool
+As a teaching assistant at the University of Rhode Island, I spend a lot of time grading students weekly submissions. One of these weekly tasks is reading students responses to weekly prompts and evaluating each submission on specific criteria. As the prompts are the same for every student; answers are naturally similar. Using basic Natural Language Processing (NLP) methods these discussions can be evaluated automatically and save the individual in charge of grading 1-2 hours of their day!  
+  
+
+### WILL FILL THE REST OUT LATER
+
