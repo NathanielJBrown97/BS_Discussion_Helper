@@ -1,0 +1,2 @@
+## Purpose:
+This folder is meant to temporarily store the raw html file created during the scrape, as well as the filtered CSV used in conjunction with the autograder modules to evaluate the students work. This folder will be cleared after every execution of the bs.py script.

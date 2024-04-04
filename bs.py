@@ -1,28 +1,53 @@
 import subprocess
 import os
 
-# For filekeeping --- ask for week number, will set the filenames.
-week_number = input("Enter the week number (1 through 12) for grading: ").strip()
+# Function: Prompts user for module choice
+def get_week_number():
+    while True:
+        week_number = input("Enter the week number (1 through 12) for grading: ").strip()
+        if week_number.isdigit() and 1 <= int(week_number) <= 12:
+            return int(week_number)
+        else:
+            print("Invalid input. Please enter a number between 1 and 12.")
 
-# Validation within 1-12; inclusive.
-if not week_number.isdigit() or not 1 <= int(week_number) <= 12:
-    print("Invalid input. Please enter a number between 1 and 12.")
-    exit(1)
+# Function: Sets Path and folder to open, according to selected week; run's scrape HTML script.
+def scrape_html(week_string):
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    scrape_html_path = os.path.join(script_dir, "gather_responses", 'scrape_html.py')
+    subprocess.run(["python", scrape_html_path, week_string], check=True)
 
-week_string = f'week{week_number}'
+# Function: Sets Path and folder to open, according to selected week; run's filter and fill the CSV script.
+def fill_csv(week_string):
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    fill_csv_path = os.path.join(script_dir, "gather_responses",  'fill_csv.py')
+    subprocess.run(["python", fill_csv_path, week_string], check=True)
 
-# Get the full path of the current script to ensure the correct directory
-script_dir = os.path.dirname(os.path.realpath(__file__))
+# Function: Initiates Autograder based on selected week. Requires Confirmation; provides opportunity to correct week before running module.
+def run_autograder(week_number):
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    autograder_module_path = os.path.join(script_dir, 'modules', 'CSC_201', f'week{week_number}_autograder_module.py')
+    
+    confirmation = input(f"Confirm you wish to run the autograder for week {week_number}: (y/n) ").strip().lower()
 
-# Set full paths to scrape and fill
-gather_responses_folder = "gather_responses"
-scrape_html_path = os.path.join(script_dir, gather_responses_folder, 'scrape_html.py')
-fill_csv_path = os.path.join(script_dir, gather_responses_folder,  'fill_csv.py') 
+    if confirmation == 'y':
+        subprocess.run(["python", autograder_module_path], check=True)
+    elif confirmation == 'n':
+        new_week_number = input("Enter the correct week number (1 through 12) for grading: ").strip()
+        run_autograder(int(new_week_number))
+    else:
+        print("Invalid input. Please enter 'y' or 'n'.")
+        exit(1)
 
-# Run scrapeHTML.py
-subprocess.run(["python", scrape_html_path, week_string], check=True)
+# Function: Main; collects intended week choice; passes theis string into scrape html. Subsequently creates CSV, then initiates autograder. 
+def main():
+    week_number = get_week_number()
+    week_string = f'week{week_number}'
+    
+    # scrape_html(week_string)
+    # fill_csv(week_string)
+    run_autograder(week_number)
+    
+    print(f"Processing for {week_string} completed.")
 
-# Run fill_csv.py 
-subprocess.run(["python", fill_csv_path, week_string], check=True)
-
-print(f"Processing for {week_string} completed.")
+if __name__ == "__main__":
+    main()

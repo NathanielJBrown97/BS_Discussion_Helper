@@ -1,0 +1,2 @@
+## Purpose:
+This folder will contain the excel downloadable to view the grading breakdown in a different manner. Helpful if your terminal / screensize is smaller and can't properly view the breakdown within your IDE.
