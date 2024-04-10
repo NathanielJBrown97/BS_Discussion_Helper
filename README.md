@@ -9,16 +9,18 @@ FILL LATER: Soup, WebDriver, Selenium, Google Chrome Extension
 Navigate to brightspace discussion board; select the dropdown arrow and view statistics. Download the CSV and place into the 'FEED_ME_STATS' folder and rename the file to stats.csv  
 
 ## 2. Starting bs.py
-In order to start this program you will run bs.py; this will prompt the user for which week they will be selecting. (This will determine the name of your graded file) 
---> A chrome window will open and prompt the user to sign in, enter get your Dou Security prompt and enter the site.
---> Navigate to the CSC 201 course  > Discussions > Select the week you will grade. (Note: Do not enter or open any of the mini-threads within the week's main thread.)
---> With the browser open; enter your terminal and hit enter to continue.  
+Start the program by running bs.py or right click 'run python in terminal'.  
+The program will then ask for the given week you will be collecting, enter a number between 1-12.  
+The program will then open a chrome window; and have the user navigate to the discussion page you wish to scrape. **DO NOT OPEN ANY SUBPAGES, just open the Weekly Discussion main thread.**  
+Now you leave the chrome window open; and hit enter on your terminal window.  
   
-Now the program will enter gather_responses folder and run the scrape_html.py and fill_csv.py scripts; placing this weeks raw html and filtered csv file into the temp folder within.   
   
-## 3. Now the bs.py file will initiate the respective auto grader module
-This will be determined by your week's choice at the start of bs.py, and will output the results to the terminal (as well as create a csv of the responses **TODO).  
+## 3. Now the bs.py script will initiate the HTML scrape of the Discussion Thread and Data Collection  
+The program will scrape the raw HTML from Brightspace's discussion board, and then filter that HTML into a CSV of the students and their responses to the topic. Now the program can start to evaluate student responses and determine grading for the given module.  
   
-## 4. Review and enter the students grades! 
+## 4. THe program will ask for confirmation of the intended week's module (Giving you the opportunity to correct a mistake)...  
+Upon confirming the module; the script will initiate that module and evaluate the responses CSV accordingly. As it completes it will save the responses into an excel sheet in the results folder; the grades will be broken down in the terminal as well for quick access.  
+  
+## 5. Review and enter the students grades! 
 At this point bs.py will clean the temporary folder and the stats.py file in feed_me_stats. Results will remain in case you wish to return to them; or do not prefer to use the terminal's output for grading.
 

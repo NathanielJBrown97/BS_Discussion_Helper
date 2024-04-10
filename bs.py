@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-# Function: Prompts user for module choice
+# Function: Prompts user for module choice -- Loop until correct option
 def get_week_number():
     while True:
         week_number = input("Enter the week number (1 through 12) for grading: ").strip()
@@ -27,7 +27,7 @@ def run_autograder(week_number):
     script_dir = os.path.dirname(os.path.realpath(__file__))
     autograder_module_path = os.path.join(script_dir, 'modules', 'CSC_201', f'week{week_number}_autograder_module.py')
     
-    confirmation = input(f"Confirm you wish to run the autograder for week {week_number}: (y/n) ").strip().lower()
+    confirmation = input(f"Confirm you wish to run the autograder for week {week_number}: (y/n) \n\n\n").strip().lower()
 
     if confirmation == 'y':
         subprocess.run(["python", autograder_module_path], check=True)
@@ -41,13 +41,13 @@ def run_autograder(week_number):
 # Function: Main; collects intended week choice; passes theis string into scrape html. Subsequently creates CSV, then initiates autograder. 
 def main():
     week_number = get_week_number()
-    week_string = f'week{week_number}'
-    
-    # scrape_html(week_string)
-    # fill_csv(week_string)
+    week_string = f'week{week_number}'    
+
+    scrape_html(week_string)
+    fill_csv(week_string)
+
     run_autograder(week_number)
     
-    print(f"Processing for {week_string} completed.")
+    print(f"\n\n\nProcessing for {week_string} completed.")
 
-if __name__ == "__main__":
-    main()
+main()

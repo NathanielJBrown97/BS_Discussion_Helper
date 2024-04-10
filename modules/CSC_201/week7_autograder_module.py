@@ -1,0 +1,1 @@
+print("There is no week 7. Why did I spend time to make this an option? Answer; I didn't want to make an exception for 7 to redirect you.")

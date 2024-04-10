@@ -1,7 +1,9 @@
 import pandas as pd
-import re
 import os
-from datetime import datetime
+import re
+
+from utility.grading_utility import score_timeliness, score_detail, score_peer_replies, get_due_date_input
+
 
 # Function: Checks for engagement in response; specifically in reference to an introduction of the student.
 # Arguments (2): Student's response and full name.
@@ -32,6 +34,11 @@ def check_major(response):
     if any(major in response.lower() for major in common_majors):
         return True
 
+    # Brief Explanation:
+    # major(ing)? / study(ing)? considers either the root or full word
+    # \b \b is a boundary; ensures separate words in evaluations
+    # Essentially checks for major / majoring in _______ <--- Allows for any entry and will count this as a valid major pattern.
+    # w+ just initiates the match for a word after the defined pattern.
     major_patterns = [
         r"\bmajor(ing)?\b in \b\w+",    
         r"\bstudy(ing)?\b \b\w+",       
@@ -46,70 +53,23 @@ def check_major(response):
             return True
     return False
 
-# Function: Counts Words in a given string.
-# Arguments (1): A given text string.
-# Summary: Simply splits the text by whitespace; then return the length of words split.
-def count_words(text):
-    words = text.split()
-    return len(words)
 
-# Function: Scores the Amount of Detail in a Post
-# Arguments (1): Passed a given response field; will be one very long string.
-# Summary: Will call a helper function to count the words in the response. From here simply guage the level of detail based upon
-# a rough word count. For the introduction it is extremely low. < 25 words == no points. 25-50 == 1/2 points. >50 == full points.
-def score_details(response):
-    word_count = count_words(response)
-    if word_count < 25:
-        return 0
-    elif 25 <= word_count < 50:
-        return 1
-    else:
-        return 2
-
-# Function: Scores the Number of Responses Students Submit
-# Arguments (2): data frame of stats (placed within feed_me_stats), and the student's full name from scraped CSV (within gather_responses).
-# Summary: Normalize the name to lowercase. Search the stats df for their full name. Isolate the student's stats specifically.
-# Provided the stats for the student isn't empty... return 2, 1, or 0 depending upon number of entries in the [Replies] field of stats.csv.
-def score_responses(df_stats, student_full_name):
-    lower_full_name = student_full_name.lower()
-    df_stats['Full Name'] = df_stats['[First_name]'] + ' ' + df_stats['[Last_name]']
-    student_stats = df_stats[df_stats['Full Name'].str.lower() == lower_full_name]
-    
-    if not student_stats.empty:
-        replies = student_stats.iloc[0]['[Replies]']
-        if replies >= 2:
-            return 2
-        elif replies == 1:
-            return 1
-    return 0
-
-def parse_timestamp(timestamp_str):
-    # Adjust the format based on your actual timestamp format
-    return datetime.strptime(timestamp_str, '%b %d, %Y %I:%M %p')
-
-def score_timeliness(timestamp_str):
-    # Define the deadline
-    deadline = datetime.strptime('Sep 6, 2023 10:00 PM', '%b %d, %Y %I:%M %p')
-    
-    # Parse the timestamp
-    post_time = parse_timestamp(timestamp_str)
-
-    # Calculate days difference
-    days_difference = (post_time - deadline).days
-    if post_time <= deadline:
-        return 2
-    else:
-        # Subtract 1 point per day late, but don't go below 0
-        return max(2 - days_difference, 0)
-    
 def main():
-    #paths to csv, and stats for grading.
+    # Gather Due Dates and Set Word Count Thresholds.
+    due_date_str = get_due_date_input()
+    word_counts = [25,50] # This is set to 25-50. Introductions can be short and still satisfy requirements.
+
+    # Paths to csv, and stats for grading.
     file_path_to_csv = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'gather_responses', 'temp', 'live_week1.csv'))
     file_path_stats = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'FEED_ME_STATS', 'stats.csv'))
 
-    # set dataframe to read csv, same for stats.
+    # Set dataframe to read csv, same for stats.
     df = pd.read_csv(file_path_to_csv)
     df_stats = pd.read_csv(file_path_stats)
+
+
+    ### EVALUATION OF STUDENTS ###
+
 
     # Evaluate each introduction; passed responses and full_name rows
     df['Introduction Score'] = df.apply(lambda row: check_introduction(row['response'], row['full_name']), axis=1).astype(int)
@@ -117,32 +77,33 @@ def main():
     # Evaluate 'Relevance' Major Mentioned; pass responses.
     df['Major Mention Score'] = df['response'].apply(check_major).astype(int)
 
-    # Evaluate 'Detail Level' (Word-Count); pass responses.
-    df['Details in Post Score'] = df['response'].apply(score_details).astype(int)
+    # Determine 'Content of Original Posts'; simply add the introductory score and Major mention scores.
+    df['Content of Original Post'] = df['Introduction Score'] + df['Major Mention Score']
+
+    # Evaluate 'Detail Level' (Word-Count); pass responses and given word count thresholds.
+    df['Details in Original Post'] = df['response'].apply(lambda response: score_detail(response, *word_counts))
 
     # Evaluate 'Peer Responses'; pass the full_name and run score_responses for each (Passed the df for stats)
-    df['Response Score'] = df['full_name'].apply(lambda name: score_responses(df_stats, name)).astype(int)
+    df['Peer Replies'] = df['full_name'].apply(lambda name: score_peer_replies(name, df_stats))
 
-    # Determine 'Content of Posts'; simply add the introductory score and Major mention scores.
-    df['Content of Post'] = df['Introduction Score'] + df['Major Mention Score']
-
-    # Determine 'Relationship to Course' metric; adding the content of post and detail scores together.
-    df['Relationship to Course'] = df.apply(lambda row: int(row['Content of Post'] >= 1) + int(row['Details in Post Score'] >= 1), axis=1)
-    df['Total Score'] = df['Content of Post'] + df['Details in Post Score'] + df['Response Score'] + df['Relationship to Course']
+    # Determine 'Relationship to Course' metric; determined by evaluating at least 1/2 points for each Content and details.
+    df['Relationship to Course Content'] = df.apply(lambda row: int(row['Content of Original Post'] >= 1) + int(row['Details in Original Post'] >= 1), axis=1)
 
     # Timeliness Score; pass date_time to the score_timeliness function.
-    df['Timeliness Score'] = df['date_time'].apply(score_timeliness).astype(int)
+    df['Timeliness'] = df['date_time'].apply(lambda submission_date: score_timeliness(submission_date, due_date_str))
 
     # Total Score; sum of Content, Details, Responses, Timeliness, and Relationship to Material. 2pts each, total of 10pts.
-    df['Total Score'] = df['Content of Post'] + df['Details in Post Score'] + df['Response Score'] + df['Relationship to Course'] + df['Timeliness Score']
+    df['Overall Score'] = df[['Timeliness', 'Peer Replies', 'Content of Original Post', 'Details in Original Post', 'Relationship to Course Content']].sum(axis=1)
 
-    # Ensure every column is displayed in terminal.
-    columns_to_display = ['full_name', 'Details in Post Score', 'Response Score', 'Content of Post', 'Relationship to Course', 'Timeliness Score', 'Total Score']
-    print(df[columns_to_display])
 
-    # Write the columns to display for each student into a spreadsheet file
+    ### OUTPUT OF RESULTS ###
+
+
+    # Output in Access Topic Format Order
+    print(df[['full_name', 'Timeliness', 'Content of Original Post', 'Details in Original Post', 'Relationship to Course Content', 'Peer Replies', 'Overall Score']])
+
+    # Write to an Excel file for alternative grading.
     output_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'results', 'week1_csc201_graded.xlsx'))
-    df[columns_to_display].to_excel(output_file_path, index=False)
+    df.to_excel(output_file_path, index=False)
 
-if __name__ == "__main__":
-    main()
+main()
