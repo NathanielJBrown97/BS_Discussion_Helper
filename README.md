@@ -18,7 +18,7 @@ Now you leave the chrome window open; and hit enter on your terminal window.
 ## 3. Now the bs.py script will initiate the HTML scrape of the Discussion Thread and Data Collection  
 The program will scrape the raw HTML from Brightspace's discussion board, and then filter that HTML into a CSV of the students and their responses to the topic. Now the program can start to evaluate student responses and determine grading for the given module.  
 <br><br>  
-## 4. THe program will ask for confirmation of the intended week's module (Giving you the opportunity to correct a mistake)...  
+## 4. The program will ask for confirmation of the intended week's module (Giving you the opportunity to correct a mistake)...  
 Upon confirming the module; the script will initiate that module and evaluate the responses CSV accordingly. As it completes it will save the responses into an excel sheet in the results folder; the grades will be broken down in the terminal as well for quick access.  
 <br><br>  
 ## 5. Review and enter the students grades! 
